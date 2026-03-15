@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Gym Management</title>
+    <style>
+        /* Classic Gym UI - Vintage Theme */
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #2c1810 0%, #4a2c1a 30%, #3d1f11 70%, #1a0f08 100%);
+            margin: 0;
+            padding: 20px;
+            color: #f4e8d1;
+            min-height: 100vh;
+        }
+
+
+        h2 {
+            text-align: center;
+            color: #d4af37;
+            font-weight: bold;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+
+        /* Filter Buttons */
+        .filter-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            background: linear-gradient(#b8860b, #daa520);
+            border: 2px solid #cd853f;
+            padding: 10px 20px;
+            margin: 0 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            color: white;
+            border-radius: 25px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(#ffd700, #ffed4e);
+            color: #8b4513;
+            font-weight: bold;
+        }
+
+
+        /* Search Bar */
+        .search-wrapper {
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            background-color: #f5f5f5;
+            padding: 10px 0;
+            z-index: 900;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            outline: none;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        /* Stats and Table Styling */
+        #stats-bar {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #f4e8d1;
+            background: rgba(139,69,19,0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            border: 2px solid #cd853f;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+
+
+        #total-clients { color: #2c3e50; }
+        #active-clients { color: #27ae60; }
+        #expired-clients { color: #e74c3c; }
+
+        /* Container for the list */
+        #client-list {
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow-x: auto;
+        }
+
+        /* Table Styling - Classic */
+        .clients-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            border-radius: 12px;
+            overflow: hidden;
+            font-size: 14px;
+            border: 3px solid #d4af37;
+        }
+
+
+        .clients-table th {
+            background: linear-gradient(135deg, #d4af37, #ffd700);
+            color: #2c1810;
+            padding: 18px 15px;
+            text-align: left;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+
+        .clients-table td {
+            padding: 15px;
+            border-bottom: 1px solid #d4af37;
+            color: #2c1810;
+        }
+
+
+        .clients-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .clients-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-cell .status-badge {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+
+        .actions-cell {
+            white-space: nowrap;
+        }
+
+        .actions-cell .btn {
+            flex: none;
+            min-width: 80px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .phone-link {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .phone-link:hover {
+            text-decoration: underline;
+        }
+
+        .date-cell {
+            font-weight: 500;
+        }
+
+        .payment-cell {
+            font-family: monospace;
+        }
+
+        /* Table is main view */
+        .client-card { display: none !important; }
+
+
+        /* Card Styling - Classic Look - fallback */
+        .client-card {
+
+            background: white;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Header inside the card (Name and Status) */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .client-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 4px 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: white;
+            border: 1px solid;
+        }
+
+        .status-paid {
+            background-color: #4a7c59;
+            border-color: #4a7c59;
+        }
+
+        .status-due {
+            background-color: #c0392b;
+            border-color: #c0392b;
+        }
+
+        .status-expired {
+            background-color: #8b4513;
+            border-color: #8b4513;
+        }
+
+        /* Data Rows */
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .data-label {
+            font-weight: bold;
+        }
+
+        /* Action Buttons Area */
+        .card-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            text-align: center;
+            font-family: inherit;
+            font-size: 14px;
+            background-color: #f8f8f8;
+        }
+
+        .btn:hover {
+            background-color: #e8e8e8;
+        }
+
+        .btn-pay {
+            background-color: #f8f8f8;
+        }
+
+        .btn-extend {
+            background-color: #f8f8f8;
+        }
+
+        .btn-edit {
+            background-color: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+
+        .btn-edit:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+            border-color: #c0392b;
+        }
+
+        .btn-delete:hover {
+            background-color: #c0392b;
+        }
+
+
+        /* Modal Styling - Classic */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border: 2px solid #ccc;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; }
+
+        .btn-secondary { background-color: #f8f8f8; border: 1px solid #ccc; }
+        .btn-primary { background-color: #e8e8e8; border: 1px solid #999; }
+
+        /* Add Client Form */
+        #add-client-form {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto 20px auto;
+        }
+
+        #add-client-form h2 {
+            margin-top: 0;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Universal Gym Management</h2>
+
+    <!-- Filter Buttons -->
+    <div class="filter-section">
+        <button class="filter-btn active" id="filter-all">All Members</button>
+        <button class="filter-btn" id="filter-expired">Expired Members</button>
+    </div>
+
+    <!-- Stats Bar -->
+    <div id="stats-bar" style="text-align: center; margin-bottom: 20px; font-size: 16px; font-weight: bold; color: #2c3e50;">
+        Total Clients: <span id="total-clients">0</span> | Active: <span id="active-clients">0</span> | Expired: <span id="expired-clients">0</span>
+    </div>
+
+    <!-- Add Client Form -->
+    <form id="add-client-form">
+
+        <h2>Add New Client</h2>
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="phone">Phone Number:</label>
+            <input type="tel" id="phone" name="phone" required>
+        </div>
+        <div class="form-group">
+            <label for="weight">Weight (kg):</label>
+            <input type="number" id="weight" name="weight">
+        </div>
+        <div class="form-group">
+            <label for="joiningDate">Joining Date:</label>
+            <input type="date" id="joiningDate" name="joiningDate" required>
+        </div>
+        <div class="form-group">
+            <label for="expiryDate">Expiry Date:</label>
+            <input type="date" id="expiryDate" name="expiryDate" required>
+        </div>
+        <div class="form-group">
+            <label for="totalFee">Total Fee:</label>
+            <input type="number" id="totalFee" name="totalFee" required>
+        </div>
+        <div class="form-group">
+            <label for="amountPaid">Amount Paid:</label>
+            <input type="number" id="amountPaid" name="amountPaid" value="0">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Add Client</button>
+    </form>
+
+    <!-- Search Bar -->
+    <div class="search-wrapper">
+        <input type="text" id="search-input" placeholder="Search by name..." autocomplete="off">
+    </div>
+
+    <!-- Client List -->
+    <div id="client-list"></div>
+
+    <!-- Extend Membership Modal -->
+    <div id="extend-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Extend Membership</h2>
+            <p>Select the new expiration date for <strong id="modal-client-name"></strong>.</p>
+            <input type="hidden" id="modal-client-id">
+            <div class="form-group">
+                <label for="new-expiry-date">New Expiry Date:</label>
+                <input type="date" id="new-expiry-date" name="new-expiry-date" required>
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-button" class="btn btn-secondary">Cancel</button>
+                <button id="save-button" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Add Payment</h2>
+            <p>Add payment for <strong id="payment-client-name"></strong>.</p>
+            <input type="hidden" id="payment-client-id">
+            <div class="form-group">
+                <label for="payment-amount">Amount:</label>
+                <input type="number" id="payment-amount" name="payment-amount" required>
+            </div>
+            <div class="modal-actions">
+                <button id="payment-cancel-button" class="btn btn-secondary">Cancel</button>
+        <button id="payment-save-button" class="btn btn-primary">Add Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div id="delete-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Delete Client</h2>
+            <p>Are you sure you want to delete <strong id="delete-client-name"></strong>?</p>
+            <input type="hidden" id="delete-client-id">
+            <div class="modal-actions">
+                <button id="delete-cancel-button" class="btn btn-secondary">Cancel</button>
+                <button id="delete-confirm-button" class="btn btn-delete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Client Modal -->
+    <div id="edit-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Edit Client</h2>
+            <p>Edit details for <strong id="edit-client-name"></strong>.</p>
+            <input type="hidden" id="edit-client-id">
+            <div class="form-group">
+                <label for="edit-name">Name:</label>
+                <input type="text" id="edit-name" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-phone">Phone Number:</label>
+                <input type="tel" id="edit-phone" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-weight">Weight (kg):</label>
+                <input type="number" id="edit-weight">
+            </div>
+            <div class="form-group">
+                <label for="edit-joiningDate">Joining Date:</label>
+                <input type="date" id="edit-joiningDate" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-expiryDate">Expiry Date:</label>
+                <input type="date" id="edit-expiryDate" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-totalFee">Total Fee:</label>
+                <input type="number" id="edit-totalFee" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-amountPaid">Amount Paid:</label>
+                <input type="number" id="edit-amountPaid">
+            </div>
+            <div class="modal-actions">
+                <button id="edit-cancel-button" class="btn btn-secondary">Cancel</button>
+                <button id="edit-save-button" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Global variables
+        let allClients = [];
+        let currentFilter = 'all'; // 'all' or 'expired'
+        const API_URL = 'http://localhost:3000/api/clients';
+
+        // Modal elements
+        const extendModal = document.getElementById('extend-modal');
+        const modalClientId = document.getElementById('modal-client-id');
+        const modalClientName = document.getElementById('modal-client-name');
+        const newExpiryDateInput = document.getElementById('new-expiry-date');
+        const cancelButton = document.getElementById('cancel-button');
+        const saveButton = document.getElementById('save-button');
+
+        const paymentModal = document.getElementById('payment-modal');
+        const paymentClientId = document.getElementById('payment-client-id');
+        const paymentClientName = document.getElementById('payment-client-name');
+        const paymentAmountInput = document.getElementById('payment-amount');
+        const paymentCancelButton = document.getElementById('payment-cancel-button');
+        const paymentSaveButton = document.getElementById('payment-save-button');
+
+        // Edit and Delete modal elements
+        const editModal = document.getElementById('edit-modal');
+        const editClientId = document.getElementById('edit-client-id');
+        const editClientName = document.getElementById('edit-client-name');
+        const editNameInput = document.getElementById('edit-name');
+        const editPhoneInput = document.getElementById('edit-phone');
+        const editWeightInput = document.getElementById('edit-weight');
+        const editJoiningDateInput = document.getElementById('edit-joiningDate');
+        const editExpiryDateInput = document.getElementById('edit-expiryDate');
+        const editTotalFeeInput = document.getElementById('edit-totalFee');
+        const editAmountPaidInput = document.getElementById('edit-amountPaid');
+        const editCancelButton = document.getElementById('edit-cancel-button');
+        const editSaveButton = document.getElementById('edit-save-button');
+
+        const deleteModal = document.getElementById('delete-modal');
+        const deleteClientId = document.getElementById('delete-client-id');
+        const deleteClientName = document.getElementById('delete-client-name');
+        const deleteCancelButton = document.getElementById('delete-cancel-button');
+        const deleteConfirmButton = document.getElementById('delete-confirm-button');
+
+        // Event listeners for new modals
+        editCancelButton.addEventListener('click', () => {
+            editModal.classList.add('hidden');
+        });
+
+        deleteCancelButton.addEventListener('click', () => {
+            deleteModal.classList.add('hidden');
+        });
+
+
+
+        // Event listeners for modals
+        cancelButton.addEventListener('click', () => {
+            extendModal.classList.add('hidden');
+        });
+
+        saveButton.addEventListener('click', async () => {
+            const clientId = modalClientId.value;
+            const newDate = newExpiryDateInput.value;
+
+            if (!newDate) {
+                alert('Please select a new expiry date.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/${clientId}/extend`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ newDate: newDate }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update membership.');
+                }
+
+                alert('Membership extended successfully!');
+                extendModal.classList.add('hidden');
+                fetchAndRenderClients();
+            } catch (error) {
+                console.error('Error extending membership:', error);
+                alert(error.message);
+            }
+        });
+
+        paymentCancelButton.addEventListener('click', () => {
+            paymentModal.classList.add('hidden');
+        });
+
+        paymentSaveButton.addEventListener('click', async () => {
+            const clientId = paymentClientId.value;
+            const amount = paymentAmountInput.value;
+
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/${clientId}/pay`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ amount: parseFloat(amount) }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to add payment.');
+                }
+
+                alert('Payment added successfully!');
+                paymentModal.classList.add('hidden');
+                fetchAndRenderClients();
+            } catch (error) {
+                console.error('Error adding payment:', error);
+                alert(error.message);
+            }
+        });
+
+        // Add client form
+        document.getElementById('add-client-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newClient = {
+                name: formData.get('name'),
+                phone: formData.get('phone'),
+                weight: formData.get('weight') ? parseFloat(formData.get('weight')) : null,
+                joiningDate: formData.get('joiningDate'),
+                expiryDate: formData.get('expiryDate'),
+                totalFee: parseFloat(formData.get('totalFee')),
+                amountPaid: parseFloat(formData.get('amountPaid')) || 0
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newClient)
+                });
+
+                if (response.ok) {
+                    alert("Client added successfully!");
+                    e.target.reset();
+                    fetchAndRenderClients();
+                } else {
+                    alert("Error adding client");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredList = allClients.filter(client => {
+                const name = client.name.toLowerCase();
+                return name.includes(searchTerm);
+            });
+            applyFiltersAndRender(filteredList);
+        });
+
+        // Filter functionality
+        const filterAllBtn = document.getElementById('filter-all');
+        const filterExpiredBtn = document.getElementById('filter-expired');
+
+        filterAllBtn.addEventListener('click', () => {
+            currentFilter = 'all';
+            filterAllBtn.classList.add('active');
+            filterExpiredBtn.classList.remove('active');
+            applyFiltersAndRender(allClients);
+        });
+
+        filterExpiredBtn.addEventListener('click', () => {
+            currentFilter = 'expired';
+            filterExpiredBtn.classList.add('active');
+            filterAllBtn.classList.remove('active');
+            applyFiltersAndRender(allClients);
+        });
+
+        // Functions
+        function updateStats() {
+            const totalEl = document.getElementById('total-clients');
+            const activeEl = document.getElementById('active-clients');
+            const expiredEl = document.getElementById('expired-clients');
+
+            const total = allClients.length;
+            const expired = allClients.filter(client => new Date(client.expiryDate) < new Date()).length;
+            const active = total - expired;
+
+            totalEl.textContent = total;
+            activeEl.textContent = active;
+            expiredEl.textContent = expired;
+        }
+
+        async function fetchAndRenderClients() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('Could not fetch clients.');
+
+                allClients = await response.json();
+                updateStats();
+                applyFiltersAndRender(allClients);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('client-list').innerHTML = `<p style="color:red;">${error.message}</p>`;
+            }
+        }
+
+
+        function applyFiltersAndRender(clients) {
+            let filteredClients = clients;
+
+            // Apply filter
+            if (currentFilter === 'expired') {
+                filteredClients = clients.filter(client => {
+                    const expDate = new Date(client.expiryDate);
+                    return new Date() > expDate;
+                });
+            }
+
+            // Apply search if there's a search term
+            const searchTerm = searchInput.value.toLowerCase();
+            if (searchTerm) {
+                filteredClients = filteredClients.filter(client => {
+                    const name = client.name.toLowerCase();
+                    return name.includes(searchTerm);
+                });
+            }
+
+            renderClients(filteredClients);
+            updateStats(); // Update stats after filter/search
+        }
+
+
+function renderClients(clientsToRender) {
+            const container = document.getElementById('client-list');
+            container.innerHTML = '';
+
+            if (clientsToRender.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#666;">No clients found.</p>';
+                return;
+            }
+
+            let tableHtml = `
+                <table class="clients-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Weight</th>
+                            <th>Expires</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            clientsToRender.forEach(client => {
+                const balance = (client.totalFee || 0) - (client.amountPaid || 0);
+                const expDate = new Date(client.expiryDate);
+                const isExpired = new Date() > expDate;
+                const formattedExpiry = !isNaN(expDate) ? expDate.toISOString().split('T')[0] : 'N/A';
+
+                let statusHtml = '';
+                if (isExpired) {
+                    statusHtml = `<span class="status-badge status-expired">Expired</span>`;
+                } else if (balance <= 0) {
+                    statusHtml = `<span class="status-badge status-paid">Paid</span>`;
+                } else {
+                    statusHtml = `<span class="status-badge status-due">Due: ₹${balance.toFixed(2)}</span>`;
+                }
+
+                tableHtml += `
+                    <tr>
+                        <td><strong>${client.name}</strong></td>
+                        <td><a href="tel:${client.phone}" class="phone-link">${client.phone}</a></td>
+                        <td>${client.weight || 'N/A'} kg</td>
+                        <td class="date-cell">${formattedExpiry} ${isExpired ? '<span style="color:#e74c3c;">(EXP)</span>' : ''}</td>
+                        <td class="payment-cell">₹${client.amountPaid.toFixed(2)} / ₹${client.totalFee.toFixed(2)}</td>
+                        <td class="status-cell">${statusHtml}</td>
+                        <td class="actions-cell">
+                            <button class="btn btn-pay" onclick="openPaymentModal('${client._id}', '${client.name}')">Pay</button>
+                            <button class="btn btn-extend" onclick="openExtendModal('${client._id}', '${client.name}', '${formattedExpiry}')">Extend</button>
+                            <button class="btn btn-edit" onclick="openEditModal('${client._id}', '${client.name}', '${client.phone}', '${client.weight}', '${client.joiningDate}', '${client.expiryDate}', '${client.totalFee}', '${client.amountPaid}')">Edit</button>
+                            <button class="btn btn-delete" onclick="openDeleteModal('${client._id}', '${client.name}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = tableHtml;
+        }
+
+        function openExtendModal(clientId, clientName, currentExpiry) {
+            modalClientId.value = clientId;
+            modalClientName.textContent = clientName;
+            newExpiryDateInput.value = currentExpiry;
+            extendModal.classList.remove('hidden');
+        }
+
+        function openPaymentModal(clientId, clientName) {
+            paymentClientId.value = clientId;
+            paymentClientName.textContent = clientName;
+            paymentAmountInput.value = '';
+            paymentModal.classList.remove('hidden');
+        }
+
+        // Edit Modal functions
+        function openEditModal(clientId, clientName, phone, weight, joiningDate, expiryDate, totalFee, amountPaid) {
+            editClientId.value = clientId;
+            editClientName.textContent = clientName;
+            editNameInput.value = clientName;
+            editPhoneInput.value = phone;
+            editWeightInput.value = weight || '';
+            editJoiningDateInput.value = joiningDate;
+            editExpiryDateInput.value = expiryDate;
+            editTotalFeeInput.value = totalFee || '';
+            editAmountPaidInput.value = amountPaid || '';
+            editModal.classList.remove('hidden');
+        }
+
+        editSaveButton.addEventListener('click', async () => {
+            const clientId = editClientId.value;
+            const updatedClient = {
+                name: editNameInput.value,
+                phone: editPhoneInput.value,
+                weight: editWeightInput.value ? parseFloat(editWeightInput.value) : null,
+                joiningDate: editJoiningDateInput.value,
+                expiryDate: editExpiryDateInput.value,
+                totalFee: parseFloat(editTotalFeeInput.value),
+                amountPaid: parseFloat(editAmountPaidInput.value) || 0
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/${clientId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedClient),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update client.');
+                }
+
+                alert('Client updated successfully!');
+                editModal.classList.add('hidden');
+                fetchAndRenderClients();
+            } catch (error) {
+                console.error('Error updating client:', error);
+                alert(error.message);
+            }
+        });
+
+        // Delete Modal functions
+        function openDeleteModal(clientId, clientName) {
+            deleteClientId.value = clientId;
+            deleteClientName.textContent = clientName;
+            deleteModal.classList.remove('hidden');
+        }
+
+        deleteConfirmButton.addEventListener('click', async () => {
+            const clientId = deleteClientId.value;
+
+            if (!confirm('Are you sure? This cannot be undone.')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/${clientId}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete client.');
+                }
+
+                alert('Client deleted successfully!');
+                deleteModal.classList.add('hidden');
+                fetchAndRenderClients();
+            } catch (error) {
+                console.error('Error deleting client:', error);
+                alert(error.message);
+            }
+        });
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', fetchAndRenderClients);
+    </script>
+
+</body>
+</html>
