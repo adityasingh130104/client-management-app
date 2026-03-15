@@ -9,8 +9,13 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Serve static files
-app.use(express.static(path.join(__dirname)));
+// Serve frontend
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 
 // -----------------------------
 // JSON File Storage
@@ -28,14 +33,20 @@ if (!fs.existsSync(DATA_DIR)) {
 let clients = [];
 let nextId = 3;
 
+
 // Load data
 function loadData() {
   try {
+
     if (fs.existsSync(DATA_PATH)) {
+
       const data = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
+
       clients = data.clients || [];
       nextId = data.nextId || 3;
+
       console.log(`Loaded ${clients.length} clients`);
+
     } else {
 
       clients = [
@@ -68,19 +79,28 @@ function loadData() {
       nextId = 3;
       saveData();
     }
+
   } catch (error) {
+
     console.error('Load error:', error);
     clients = [];
+
   }
 }
+
 
 // Save data
 function saveData() {
   try {
+
     const data = { clients, nextId };
+
     fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
+
   } catch (error) {
+
     console.error('Save error:', error);
+
   }
 }
 
@@ -91,22 +111,32 @@ loadData();
 // API ROUTES
 // -----------------------------
 
-// GET all clients
+
+// GET clients
 app.get('/api/clients', (req, res) => {
+
   try {
+
     const sorted = [...clients].sort(
       (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
     );
+
     res.json(sorted);
+
   } catch (error) {
+
     res.status(500).json({ message: 'Fetch error' });
+
   }
+
 });
 
 
 // ADD client
 app.post('/api/clients', (req, res) => {
+
   try {
+
     const { name, phone, weight, joiningDate, expiryDate, totalFee, amountPaid = 0 } = req.body;
 
     if (!name || !phone || !joiningDate || !expiryDate || totalFee === undefined) {
@@ -114,6 +144,7 @@ app.post('/api/clients', (req, res) => {
     }
 
     const newClient = {
+
       _id: (nextId++).toString(),
       name,
       phone,
@@ -124,25 +155,33 @@ app.post('/api/clients', (req, res) => {
       amountPaid: parseFloat(amountPaid),
       createdAt: new Date(),
       updatedAt: new Date()
+
     };
 
     clients.push(newClient);
+
     saveData();
 
     res.status(201).json(newClient);
 
   } catch (error) {
+
     res.status(400).json({ message: error.message });
+
   }
+
 });
 
 
 // ADD PAYMENT
 app.put('/api/clients/:id/pay', (req, res) => {
+
   try {
 
     const index = clients.findIndex(c => c._id === req.params.id);
-    if (index === -1) return res.status(404).json({ message: 'Client not found' });
+
+    if (index === -1)
+      return res.status(404).json({ message: 'Client not found' });
 
     const amount = Number(req.body.amount);
 
@@ -150,6 +189,7 @@ app.put('/api/clients/:id/pay', (req, res) => {
       return res.status(400).json({ message: 'Invalid amount' });
 
     clients[index].amountPaid += amount;
+
     clients[index].updatedAt = new Date();
 
     saveData();
@@ -157,22 +197,31 @@ app.put('/api/clients/:id/pay', (req, res) => {
     res.json(clients[index]);
 
   } catch (error) {
+
     res.status(500).json({ message: error.message });
+
   }
+
 });
 
 
-// EXTEND MEMBERSHIP
+// EXTEND membership
 app.put('/api/clients/:id/extend', (req, res) => {
+
   try {
 
     const index = clients.findIndex(c => c._id === req.params.id);
-    if (index === -1) return res.status(404).json({ message: 'Client not found' });
+
+    if (index === -1)
+      return res.status(404).json({ message: 'Client not found' });
 
     const newDate = req.body.newDate;
-    if (!newDate) return res.status(400).json({ message: 'Date required' });
+
+    if (!newDate)
+      return res.status(400).json({ message: 'Date required' });
 
     clients[index].expiryDate = newDate;
+
     clients[index].updatedAt = new Date();
 
     saveData();
@@ -180,17 +229,23 @@ app.put('/api/clients/:id/extend', (req, res) => {
     res.json(clients[index]);
 
   } catch (error) {
+
     res.status(500).json({ message: error.message });
+
   }
+
 });
 
 
-// DELETE CLIENT
+// DELETE client
 app.delete('/api/clients/:id', (req, res) => {
+
   try {
 
     const index = clients.findIndex(c => c._id === req.params.id);
-    if (index === -1) return res.status(404).json({ message: 'Client not found' });
+
+    if (index === -1)
+      return res.status(404).json({ message: 'Client not found' });
 
     clients.splice(index, 1);
 
@@ -199,21 +254,28 @@ app.delete('/api/clients/:id', (req, res) => {
     res.json({ message: 'Client deleted' });
 
   } catch (error) {
+
     res.status(500).json({ message: error.message });
+
   }
+
 });
 
 
-// FULL EDIT
+// EDIT client
 app.put('/api/clients/:id', (req, res) => {
+
   try {
 
     const index = clients.findIndex(c => c._id === req.params.id);
-    if (index === -1) return res.status(404).json({ message: 'Client not found' });
+
+    if (index === -1)
+      return res.status(404).json({ message: 'Client not found' });
 
     const { name, phone, weight, joiningDate, expiryDate, totalFee, amountPaid } = req.body;
 
     clients[index] = {
+
       ...clients[index],
       name,
       phone,
@@ -223,6 +285,7 @@ app.put('/api/clients/:id', (req, res) => {
       totalFee: parseFloat(totalFee),
       amountPaid: parseFloat(amountPaid),
       updatedAt: new Date()
+
     };
 
     saveData();
@@ -230,10 +293,13 @@ app.put('/api/clients/:id', (req, res) => {
     res.json(clients[index]);
 
   } catch (error) {
+
     res.status(500).json({ message: error.message });
+
   }
+
 });
 
 
-// EXPORT APP (required for Vercel)
+// Export app for Vercel
 module.exports = app;
